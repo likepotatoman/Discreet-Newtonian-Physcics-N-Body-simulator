@@ -1,0 +1,130 @@
+ProchainePosition[{ListeCorp_, MV_, XPV_, YPV_, ZPV_, CXVV_, CYVV_, 
+    CZVV_, dt_, ListePoint_, 
+    t_}] :=(*Initialisation de la fonction et des arguments*)
+  Module[{XPV2, YPV2, ZPV2, CXVV2, CYVV2, CZVV2, CXAV2, CYAV2, CZAV2, 
+    ConstGrav, ComposanteVecteur, Collision, ListePoint2, t2, 
+    ListeCorp2, XC, YC, ZC, XVC, YVC, ZVC, XAC, YAC, ZAC, 
+    ComposanteVecteurP},(*Creation de variables locales*)
+   ComposanteVecteur = {0, 0, 0};
+   Collision = False;
+   t2 = t + dt;
+   ListeCorp2 = {};
+   ListePoint2 = ListePoint;
+   
+   
+   If[Mod[t2, dt*150] == 0
+    
+    
+    , AppendTo[ListePoint2, {White, Point[{XPV, YPV, ZPV}]}]];
+   For[i = 1, i < Length[ListeCorp] + 1, i++, 
+    If[Norm[{ListeCorp[[i]][[1]] - XPV, ListeCorp[[i]][[2]] - YPV, 
+        ListeCorp[[i]][[3]] - ZPV}] < MV + ListeCorp[[i]][[4]],
+     
+     
+     Collision = True
+     
+     
+     ; Break[]]](*On check les collision*);
+   If[Collision == False, 
+    For[i = 1, i < Length[ListeCorp] + 1, i++, 
+     ComposanteVecteur += 
+      6.67*10^-11*
+       ListeCorp[[i]][[
+         4]]/((XPV - ListeCorp[[i]][[1]])^2 + (YPV - 
+             ListeCorp[[i]][[2]])^2 + (ZPV - 
+             ListeCorp[[i]][[3]])^2)*({ListeCorp[[i]][[1]] - XPV, 
+          ListeCorp[[i]][[2]] - YPV, ListeCorp[[i]][[3]] - ZPV}/
+         Norm[{ListeCorp[[i]][[1]] - XPV, ListeCorp[[i]][[2]] - YPV, 
+           ListeCorp[[i]][[3]] - ZPV}])];
+    (*Creation du vecteur unitaire (la partie a la fin),
+    puis on le multiplit par la norme du vecteur acceleration (partie \
+du debut) repete par le nombre de fois il y a de corps*){CXAV2, CYAV2,
+       CZAV2} = 
+     ComposanteVecteur;(*On casse la liste ComposanteVecteur en ses \
+composantes*){CXVV2, CYVV2, CZVV2} = {CXVV + CXAV2*dt, 
+      CYVV + CYAV2*dt, 
+      CZVV + CZAV2*
+        dt};(*Calcul des vitesses en fonction de \
+l'acceleration*){XPV2, YPV2, ZPV2} = {XPV + CXVV2*dt, YPV + CYVV2*dt, 
+      ZPV + CZVV2*
+        dt};(*Calcul des positions en fonction de la vitesse*)
+    For[i = 1, i < Length[ListeCorp] + 1, i++, 
+     For[j = 1, j < Length[ListeCorp] + 1, j++, 
+      If[i =!= j, ComposanteVecteurP = {0, 0, 0};
+        ComposanteVecteurP += 
+         6.67*10^-11*
+          ListeCorp[[j]][[
+            4]]/((ListeCorp[[i]][[1]] - 
+                ListeCorp[[j]][[1]])^2 + (ListeCorp[[i]][[2]] - 
+                ListeCorp[[j]][[2]])^2 + (ListeCorp[[i]][[3]] - 
+                ListeCorp[[j]][[3]])^2)*({ListeCorp[[j]][[1]] - 
+              ListeCorp[[i]][[1]], 
+             ListeCorp[[j]][[2]] - ListeCorp[[i]][[2]], 
+             ListeCorp[[j]][[3]] - ListeCorp[[i]][[3]]}/
+            Norm[{ListeCorp[[j]][[1]] - ListeCorp[[i]][[1]], 
+              ListeCorp[[j]][[2]] - ListeCorp[[i]][[2]], 
+              ListeCorp[[j]][[3]] - ListeCorp[[i]][[3]]}])];];
+     {XAC, YAC, ZAC} = ComposanteVecteurP;
+     {XVC, YVC, ZVC} = {ListeCorp[[i]][[6]] + XAC*dt, 
+       ListeCorp[[i]][[7]] + YAC*dt, ListeCorp[[i]][[8]] + ZAC*dt};
+     {XC, YC, ZC} = {ListeCorp[[i]][[1]] + XVC*dt, 
+       ListeCorp[[i]][[2]] + YVC*dt, ListeCorp[[i]][[3]] + ZVC*dt};
+     AppendTo[
+      ListeCorp2, {XC, YC, ZC, ListeCorp[[i]][[4]], 
+       ListeCorp[[i]][[5]], XVC, YVC, ZVC}]];
+    {ListeCorp2, MV, XPV2, YPV2, ZPV2, CXVV2, CYVV2, CZVV2, dt, 
+     ListePoint2, 
+     t2}(*Les donnees de sortie de la fonction*), {ListeCorp, MV, XPV,
+      YPV, ZPV, CXVV, CYVV, CZVV, dt, ListePoint, 
+     t}(*Les donnees non changees de la fonction car il y a eu une \
+collision*)]];
+
+
+TransformeEnGraphique[{ListeCorp_, MV_, XPV_, YPV_, ZPV_, CXVV_, 
+    CYVV_, CZVV_, dt_, ListePoint_, t_}] := 
+  Module[{ListeCorpGraphique},(*Initialisation de la liste graphique*)
+   ListeCorpGraphique = {};
+   (*Ajout des sphères pour chaque corps dans ListeCorp*)
+   Do[AppendTo[
+     ListeCorpGraphique, {ListeCorp[[i]][[5]], 
+      Sphere[{ListeCorp[[i]][[1]], ListeCorp[[i]][[2]], 
+        ListeCorp[[i]][[3]]}, ListeCorp[[i]][[4]]]}], {i, 
+     Length[ListeCorp]}];
+   (*Ajout de la sphère rouge pour la position XPV,YPV,ZPV*)
+   AppendTo[ListeCorpGraphique,
+    
+    
+    {Red, Sphere[{XPV, YPV, ZPV}, 10]}];
+   
+   
+   AppendTo[ListeCorpGraphique, ListePoint];
+   (*Création du graphique 3D*)
+   Graphics3D[ListeCorpGraphique, PlotRange -> {
+      
+      
+      {-1000, 1000}, {-1000, 1000}, {-1000, 1000}
+      
+      
+      }, Background -> Black, Axes -> True, AxesLabel -> {x, y, z}]];
+
+
+
+
+
+Manipulate[TransformeEnGraphique[Nest[
+   
+   ProchainePosition, {{{0, 0, 0, 100, Green, -0.000004, 0, 
+      0}, {-500, -500, -500, 100, Blue, 0, 0, 0}, {700, 700, 700, 100,
+       Purple, -0.000001, -0.000001, -0.000001}},
+    
+    10, px, py, pz, vx, vy, vz, 100000, {}, 0}
+   
+   , n]],
+ 
+ {{n, 0}, 0, 5000, 1},
+ {{vx, 0}, -0.00001, 0.00001},
+ {{vy, 0}, -0.00001, 0.00001},
+ {{vz, 0}, -0.00001, 0.00001},
+ {{px, 500}, -1000, 1000, 1}, {
+  {py, 500}, -1000, 1000, 1},
+ {{pz, 500}, -1000, 1000, 1}]
